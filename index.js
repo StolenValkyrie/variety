@@ -166,4 +166,10 @@ console.log(
         : "MISSING"
 );
 
-client.login(process.env.TOKEN);
+console.log("TOKEN CHECK:", {
+    exists: !!process.env.DISCORD_TOKEN,
+    length: process.env.DISCORD_TOKEN?.length || 0,
+    hasWhitespace: /\s/.test(process.env.DISCORD_TOKEN || "")
+});
+
+client.login(process.env.DISCORD_TOKEN);
