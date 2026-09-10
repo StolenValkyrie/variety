@@ -159,13 +159,4 @@ client.on("interactionCreate", async (interaction) => {
     }
 });
 
-const token = process.env.DISCORD_TOKEN;
-
-console.log("Token exists:", Boolean(token));
-console.log("Token length:", token ? token.length : 0);
-console.log(
-    "Token has whitespace:",
-    token ? /\s/.test(token) : false
-);
-
-client.login(token);
+client.login(process.env.DISCORD_TOKEN);
