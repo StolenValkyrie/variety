@@ -14,8 +14,7 @@ const config = {
     warningTitle: "Do Not Talk",
 
     warningText:
-        "This channel is monitored by Variety's moderation system.\n\n" +
-        "Do not send messages here.",
+        "This channel is intended to catch bots/spam accounts.",
 
     deleteMessageSeconds: 86400,
 
@@ -67,7 +66,7 @@ async function sendWarning(channel) {
 
         .addTextDisplayComponents(
             new TextDisplayBuilder().setContent(
-                "Messages in this channel may result in moderation action."
+                "Messages sent will lead to you being softbanned."
             )
         );
 

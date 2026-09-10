@@ -9,5 +9,7 @@ module.exports = {
     HONEYPOT: {
         NAME: "do-not-talk",
         LOG_CHANNEL: "mod-logs"
-    }
+        },
+
+        footer: "https://cdn.phototourl.com/free/2026-09-10-8e18d8c4-f22c-4f2f-b093-f16841bfc8a3.png"
 };
