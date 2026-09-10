@@ -161,9 +161,9 @@ client.on("interactionCreate", async (interaction) => {
 
 console.log(
     "DISCORD_TOKEN:",
-    process.env.DISCORD_TOKEN
+    process.env.TOKEN
         ? `Loaded (${process.env.DISCORD_TOKEN.length} characters)`
         : "MISSING"
 );
 
-client.login(process.env.DISCORD_TOKEN);
+client.login(process.env.TOKEN);
