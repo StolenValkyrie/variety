@@ -11,6 +11,12 @@ ActivityType
 const fs = require("fs");
 const path = require("path");
 
+console.log("ENV CHECK:", {
+GUILD_ID: process.env.GUILD_ID,
+CLIENT_ID: process.env.CLIENT_ID,
+HAS_TOKEN: !!process.env.DISCORD_TOKEN
+});
+
 const GUILD_ID = process.env.GUILD_ID;
 const CLIENT_ID = process.env.CLIENT_ID;
 const TOKEN = process.env.DISCORD_TOKEN;
