@@ -8,6 +8,7 @@ ButtonBuilder,
 ButtonStyle,
 MediaGalleryBuilder,
 MediaItemBuilder,
+MediaType,
 MessageFlags
 } = require("discord.js");
 
@@ -40,24 +41,26 @@ info:
 };
 
 function buildDashboard() {
-return new ContainerBuilder()
+const container = new ContainerBuilder()
 
     .addMediaGalleryComponents(
-        new MediaGalleryBuilder()
-            .addItems(
-                new MediaItemBuilder()
-                    .setURL(config.topBanner)
-            )
+        new MediaGalleryBuilder().setMediaItems([
+            new MediaItemBuilder()
+                .setType(MediaType.Image)
+                .setUrl(config.topBanner)
+        ])
     )
 
     .addTextDisplayComponents(
-        new TextDisplayBuilder()
-            .setContent(`# ${config.title}`)
+        new TextDisplayBuilder().setContent(
+            `# ${config.title}`
+        )
     )
 
     .addTextDisplayComponents(
-        new TextDisplayBuilder()
-            .setContent(config.description)
+        new TextDisplayBuilder().setContent(
+            config.description
+        )
     )
 
     .addSeparatorComponents(
@@ -66,12 +69,11 @@ return new ContainerBuilder()
     )
 
     .addTextDisplayComponents(
-        new TextDisplayBuilder()
-            .setContent(
-                `## Rules\n\n${config.rules
-                    .map((rule, index) => `${index + 1}. ${rule}`)
-                    .join("\n")}`
-            )
+        new TextDisplayBuilder().setContent(
+            `## Rules\n\n${config.rules
+                .map((rule, index) => `${index + 1}. ${rule}`)
+                .join("\n")}`
+        )
     )
 
     .addSeparatorComponents(
@@ -80,10 +82,9 @@ return new ContainerBuilder()
     )
 
     .addTextDisplayComponents(
-        new TextDisplayBuilder()
-            .setContent(
-                `## Information\n\n${config.info}`
-            )
+        new TextDisplayBuilder().setContent(
+            `## Information\n\n${config.info}`
+        )
     )
 
     .addSeparatorComponents(
@@ -92,18 +93,17 @@ return new ContainerBuilder()
     )
 
     .addActionRowComponents(
-        new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId("variety:rules")
-                    .setLabel("Rules")
-                    .setStyle(ButtonStyle.Secondary),
+        new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId("variety:rules")
+                .setLabel("Rules")
+                .setStyle(ButtonStyle.Secondary),
 
-                new ButtonBuilder()
-                    .setCustomId("variety:info")
-                    .setLabel("Info")
-                    .setStyle(ButtonStyle.Secondary)
-            )
+            new ButtonBuilder()
+                .setCustomId("variety:info")
+                .setLabel("Info")
+                .setStyle(ButtonStyle.Secondary)
+        )
     )
 
     .addSeparatorComponents(
@@ -112,12 +112,14 @@ return new ContainerBuilder()
     )
 
     .addMediaGalleryComponents(
-        new MediaGalleryBuilder()
-            .addItems(
-                new MediaItemBuilder()
-                    .setURL(config.bottomBanner)
-            )
+        new MediaGalleryBuilder().setMediaItems([
+            new MediaItemBuilder()
+                .setType(MediaType.Image)
+                .setUrl(config.bottomBanner)
+        ])
     );
+
+return container;
 
 }
 
@@ -147,7 +149,9 @@ async function handleDashboardButton(interaction) {
 if (interaction.customId === "variety:rules") {
 return interaction.reply({
 content:
-Server Rules\n\n${config.rules .map((rule, index) => ${index + 1}. ${rule}) .join("\n")},
+`Server Rules\n\n${config.rules
+    .map((rule, index) => `${index + 1}. ${rule}`)
+    .join("\n")}`,
 ephemeral: true
 });
 }
