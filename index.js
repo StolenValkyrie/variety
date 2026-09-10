@@ -38,6 +38,7 @@ GatewayIntentBits.MessageContent
 client.commands = new Collection();
 
 const commandsPath = path.join(__dirname, "commands");
+
 const commandFiles = fs
 .readdirSync(commandsPath)
 .filter(file => file.endsWith(".js"));
@@ -97,7 +98,7 @@ console.log(
 
 client.once("ready", async () => {
 console.log(
-    `Variety is online as ${client.user.tag}`
+`Variety is online as ${client.user.tag}`
 );
 
 client.user.setActivity(
@@ -150,8 +151,6 @@ try {
         error
     );
 }
-
-});
 
 });
 
@@ -224,9 +223,7 @@ try {
 });
 
 client.on("interactionCreate", async (interaction) => {
-if (
-interaction.guildId !== GUILD_ID
-) {
+if (interaction.guildId !== GUILD_ID) {
 return;
 }
 
@@ -265,7 +262,6 @@ try {
     }
 
     if (interaction.isButton()) {
-
         if (
             interaction.customId ===
             "variety:verification"
