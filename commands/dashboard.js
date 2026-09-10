@@ -102,7 +102,7 @@ const container = new ContainerBuilder()
             new ButtonBuilder()
                 .setCustomId("variety:info")
                 .setLabel("Info")
-                .setStyle(ButtonStyle.Secondary)
+                .setStyle(ButtonStyle.Secondary),
         )
     )
 

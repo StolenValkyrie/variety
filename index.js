@@ -97,14 +97,17 @@ console.log(
 
 client.once("ready", async () => {
 console.log(
-Variety is online as ${client.user.tag}
+    `Variety is online as ${client.user.tag}`
 );
 
 client.user.setActivity(
-Variety - ${client.guilds.cache.reduce( (total, guild) => total + guild.memberCount, 0 )} Members,
-{
-type: ActivityType.Watching
-}
+    `Variety - ${client.guilds.cache.reduce(
+        (total, guild) => total + guild.memberCount,
+        0
+    )} Members`,
+    {
+        type: ActivityType.Watching
+    }
 );
 
 try {
@@ -147,6 +150,8 @@ try {
         error
     );
 }
+
+});
 
 });
 
