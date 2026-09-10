@@ -31,8 +31,21 @@ client.commands.set("dashboard", dashboard);
 client.commands.set("honeypot", honeypot);
 client.commands.set("verification", verification);
 
-client.once("ready", async () => {
+js
+client.once("ready", () => {
     console.log(`Variety is online as ${client.user.tag}`);
+
+    client.user.setActivity(
+        `Variety - ${client.guilds.cache.reduce(
+            (total, guild) => total + guild.memberCount,
+            0
+        )} Members`,
+        {
+            type: 3 // Watching
+        }
+    );
+});
+
 
     try {
         const guild = await client.guilds.fetch(GUILD_ID);
