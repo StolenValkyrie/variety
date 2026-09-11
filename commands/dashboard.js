@@ -44,9 +44,6 @@ function buildDashboard() {
       new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
     )
 
-    .addSeparatorComponents(
-      new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
-    )
     .addActionRowComponents(
       new ActionRowBuilder().addComponents(
         new ButtonBuilder()

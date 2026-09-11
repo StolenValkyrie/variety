@@ -82,12 +82,12 @@ function buildSupportPanel() {
     )
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(
-        "# <:vlogo:1547647295531651232> Support"
+        "# <:logo2:11547875517250936842> Support"
       )
     )
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(
-        "Need help? Open a ticket and staff will be with you shortly."
+        "Use the tickets to recieve help from staff! Misuse will lead to your ticket rights being revoked."
       )
     )
     .addSeparatorComponents(
