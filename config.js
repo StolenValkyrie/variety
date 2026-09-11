@@ -1,15 +1,38 @@
+// Single source of truth for all bot configuration.
+// Everything here is pulled from .env — nothing is hardcoded, so you only
+// ever have to change values in one place.
+
 module.exports = {
-    GUILD_ID: "1547565579832135754",
+  guildId: process.env.GUILD_ID,
+  clientId: process.env.CLIENT_ID,
+  token: process.env.DISCORD_TOKEN,
+  prefix: process.env.PREFIX || "!",
 
-    CHANNELS: {
-        DASHBOARD: "1547565813383569418",
-        VERIFICATION: "1547612350310252645"
-    },
+  verifiedRoleId: process.env.VERIFIED_ROLE_ID,
+  dashboardChannelId: process.env.DASHBOARD_CHANNEL_ID,
+  verificationChannelId: process.env.VERIFICATION_CHANNEL_ID,
+  supportChannelId: process.env.SUPPORT_CHANNEL_ID || null,
 
-    HONEYPOT: {
-        NAME: "do-not-talk",
-        LOG_CHANNEL: "mod-logs"
-        },
+  dock: {
+    apiUrl: "https://api.docksys.xyz",
+    apiKey: process.env.DOCK_API_KEY
+  },
 
-        footer: "https://cdn.phototourl.com/free/2026-09-10-8e18d8c4-f22c-4f2f-b093-f16841bfc8a3.png"
+  honeypot: {
+    channelName: "do-not-talk",
+    logChannelName: "mod-logs",
+    warningTitle: "Do Not Talk",
+    warningText: "This channel is intended to catch bots/spam accounts.",
+    deleteMessageSeconds: 86400
+  },
+
+  banners: {
+    top: "https://cdn.phototourl.com/free/2026-09-10-ba77c95b-e86b-4d71-b693-fddc021c9dc2.png",
+    bottom: "https://cdn.phototourl.com/free/2026-09-10-127fedb5-ff21-4f48-8f4b-0927e9b49313.png"
+  },
+
+  support: {
+    message:
+      "Need a hand? Let staff know what's going on and someone will be with you shortly."
+  }
 };
