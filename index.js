@@ -187,7 +187,7 @@ client.on("interactionCreate", async interaction => {
     }
 
     if (interaction.isButton()) {
-      if (interaction.customId === "variety:verification") {
+      if (interaction.customId.startsWith("variety:verification")) {
         const verification = client.commands.get("verification");
 
         if (
@@ -246,6 +246,19 @@ client.on("interactionCreate", async interaction => {
 
         if (support && typeof support.submitRenameModal === "function") {
           await support.submitRenameModal(interaction);
+        }
+
+        return;
+      }
+
+      if (interaction.customId.startsWith("variety:verification")) {
+        const verification = client.commands.get("verification");
+
+        if (
+          verification &&
+          typeof verification.handleVerification === "function"
+        ) {
+          await verification.handleVerification(interaction);
         }
 
         return;
