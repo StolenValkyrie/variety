@@ -82,7 +82,7 @@ function buildSupportPanel() {
     )
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(
-        "# <:logo2:11547875517250936842> Support"
+        "# <:logo2:1547875517250936842> Support"
       )
     )
     .addTextDisplayComponents(
