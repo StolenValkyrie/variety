@@ -43,21 +43,7 @@ function buildDashboard() {
     .addSeparatorComponents(
       new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
     )
-    .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(
-        `## Rules\n\n${dashboardConfig.rules
-          .map((rule, index) => `${index + 1}. ${rule}`)
-          .join("\n")}`
-      )
-    )
-    .addSeparatorComponents(
-      new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
-    )
-    .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(
-        `## Information\n\n${dashboardConfig.info}`
-      )
-    )
+
     .addSeparatorComponents(
       new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
     )

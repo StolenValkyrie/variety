@@ -216,6 +216,16 @@ client.on("interactionCreate", async interaction => {
         return;
       }
 
+      if (interaction.customId.startsWith("variety:ticket:")) {
+        const support = client.commands.get("support");
+
+        if (support && typeof support.handleTicketButton === "function") {
+          await support.handleTicketButton(interaction);
+        }
+
+        return;
+      }
+
       if (interaction.customId === "variety:honeypot") {
         const honeypot = client.commands.get("honeypot");
 
@@ -224,6 +234,18 @@ client.on("interactionCreate", async interaction => {
           typeof honeypot.handleHoneypotButton === "function"
         ) {
           await honeypot.handleHoneypotButton(interaction);
+        }
+
+        return;
+      }
+    }
+
+    if (interaction.isModalSubmit()) {
+      if (interaction.customId === "variety:ticket:rename-modal") {
+        const support = client.commands.get("support");
+
+        if (support && typeof support.submitRenameModal === "function") {
+          await support.submitRenameModal(interaction);
         }
 
         return;

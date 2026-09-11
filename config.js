@@ -32,7 +32,16 @@ module.exports = {
   },
 
   support: {
-    message:
-      "Need a hand? Let staff know what's going on and someone will be with you shortly."
+    // Channel the ticket panel gets posted to (override with
+    // SUPPORT_PANEL_CHANNEL_ID in .env if you ever need to change it).
+    panelChannelId: process.env.SUPPORT_PANEL_CHANNEL_ID || "1547566142091173999",
+
+    // Optional: role that counts as "staff" for claim/rename/close/unclaim.
+    // If unset, anyone with Manage Server counts as staff instead.
+    staffRoleId: process.env.SUPPORT_STAFF_ROLE_ID || null,
+
+    // Optional: category new ticket channels get created under.
+    // If unset, tickets are created at the top level of the server.
+    ticketCategoryId: process.env.SUPPORT_TICKET_CATEGORY_ID || null
   }
 };
