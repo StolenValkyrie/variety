@@ -21,7 +21,7 @@ function buildVerificationPanel() {
     )
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(
-        "# <:vlogo:1547647295531651232> Verification"
+        "# <:logo2:1547875517250936842> Verification"
       )
     )
     .addTextDisplayComponents(
