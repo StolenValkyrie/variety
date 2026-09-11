@@ -15,24 +15,27 @@ const {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
+  EmbedBuilder,
   MessageFlags
 } = require("discord.js");
 
 // Ticket state lives in each ticket channel's topic, so it survives a
 // restart without needing a database:
-//   ticket-owner:<userId>|claimed-by:<staffId or "none">
+//   ticket-owner:<userId>|claimed-by:<staffId or "none">|panel-msg:<messageId or "none">
 function parseTopic(topic) {
   const ownerMatch = /ticket-owner:(\d+)/.exec(topic || "");
   const claimMatch = /claimed-by:(\d+|none)/.exec(topic || "");
+  const msgMatch = /panel-msg:(\d+)/.exec(topic || "");
 
   return {
     ownerId: ownerMatch ? ownerMatch[1] : null,
-    claimedBy: claimMatch && claimMatch[1] !== "none" ? claimMatch[1] : null
+    claimedBy: claimMatch && claimMatch[1] !== "none" ? claimMatch[1] : null,
+    panelMessageId: msgMatch ? msgMatch[1] : null
   };
 }
 
-function buildTopic(ownerId, claimedBy) {
-  return `ticket-owner:${ownerId}|claimed-by:${claimedBy || "none"}`;
+function buildTopic(ownerId, claimedBy, panelMessageId) {
+  return `ticket-owner:${ownerId}|claimed-by:${claimedBy || "none"}|panel-msg:${panelMessageId || "none"}`;
 }
 
 function isStaff(member) {
@@ -71,6 +74,22 @@ function ticketButtons() {
       .setLabel("Close")
       .setStyle(ButtonStyle.Danger)
   );
+}
+
+function buildTicketEmbed({ ownerId, reason, claimedBy }) {
+  return new EmbedBuilder()
+    .setColor(claimedBy ? 0x57f287 : 0x5865f2)
+    .setTitle("Support Ticket")
+    .addFields(
+      { name: "Opened by", value: `<@${ownerId}>`, inline: true },
+      {
+        name: "Status",
+        value: claimedBy ? `Claimed by <@${claimedBy}>` : "Unclaimed",
+        inline: true
+      },
+      { name: "Reason", value: reason || "No reason provided." }
+    )
+    .setTimestamp();
 }
 
 function buildSupportPanel() {
@@ -156,27 +175,19 @@ async function executeSlash(interaction) {
   });
 }
 
-async function openTicket(interaction) {
-  const guild = interaction.guild;
-  const existing = guild.channels.cache.find(channel => {
+function findExistingTicket(guild, userId) {
+  return guild.channels.cache.find(channel => {
     if (channel.type !== ChannelType.GuildText) return false;
     const { ownerId } = parseTopic(channel.topic);
-    return ownerId === interaction.user.id;
+    return ownerId === userId;
   });
+}
 
-  if (existing) {
-    return interaction.reply({
-      content: `You already have an open ticket: ${existing}`,
-      ephemeral: true
-    });
-  }
-
-  await interaction.deferReply({ ephemeral: true });
-
+function ticketOverwrites(guild, user) {
   const overwrites = [
     { id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
     {
-      id: interaction.user.id,
+      id: user.id,
       allow: [
         PermissionFlagsBits.ViewChannel,
         PermissionFlagsBits.SendMessages,
@@ -196,36 +207,125 @@ async function openTicket(interaction) {
     });
   }
 
+  return overwrites;
+}
+
+// Shared by the button/modal flow and the !ticket prefix command.
+async function createTicketChannel(guild, user, reason) {
   const ticketChannel = await guild.channels.create({
-    name: `ticket-${sanitizeChannelName(interaction.user.username)}`,
+    name: `ticket-${sanitizeChannelName(user.username)}`,
     type: ChannelType.GuildText,
     parent: config.support.ticketCategoryId || undefined,
-    topic: buildTopic(interaction.user.id, null),
-    permissionOverwrites: overwrites,
-    reason: `Ticket opened by ${interaction.user.tag}`
+    topic: buildTopic(user.id, null, null),
+    permissionOverwrites: ticketOverwrites(guild, user),
+    reason: `Ticket opened by ${user.tag}`
   });
 
-  const panel = new ContainerBuilder()
-    .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent("# Support Ticket")
-    )
-    .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(
-        `Opened by ${interaction.user}. Staff will be with you shortly.\nUnclaimed.`
-      )
-    )
-    .addSeparatorComponents(
-      new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
-    )
-    .addActionRowComponents(ticketButtons());
+  const staffMention = config.support.staffRoleId
+    ? `<@&${config.support.staffRoleId}>`
+    : "";
 
-  await ticketChannel.send({
-    content: `${interaction.user}`,
-    components: [panel],
-    flags: MessageFlags.IsComponentsV2
+  const panelMessage = await ticketChannel.send({
+    content: `${user} ${staffMention}`.trim(),
+    embeds: [buildTicketEmbed({ ownerId: user.id, reason, claimedBy: null })],
+    components: [ticketButtons()]
   });
+
+  await ticketChannel.setTopic(buildTopic(user.id, null, panelMessage.id));
+
+  return ticketChannel;
+}
+
+async function updateTicketEmbed(channel, { ownerId, claimedBy, panelMessageId }) {
+  if (!panelMessageId) return;
+
+  try {
+    const message = await channel.messages.fetch(panelMessageId);
+    const existingEmbed = message.embeds[0];
+    const reasonField = existingEmbed?.fields?.find(field => field.name === "Reason");
+    const reason = reasonField ? reasonField.value : "No reason provided.";
+
+    await message.edit({
+      embeds: [buildTicketEmbed({ ownerId, reason, claimedBy })]
+    });
+  } catch (error) {
+    console.error("Failed to update ticket embed:", error);
+  }
+}
+
+async function handleOpenTicketButton(interaction) {
+  const existing = findExistingTicket(interaction.guild, interaction.user.id);
+
+  if (existing) {
+    return interaction.reply({
+      content: `You already have an open ticket: ${existing}`,
+      ephemeral: true
+    });
+  }
+
+  const modal = new ModalBuilder()
+    .setCustomId("variety:ticket:open-modal")
+    .setTitle("Open a Ticket");
+
+  const reasonInput = new TextInputBuilder()
+    .setCustomId("reason")
+    .setLabel("Reason for opening a ticket")
+    .setStyle(TextInputStyle.Paragraph)
+    .setMaxLength(1000)
+    .setRequired(true);
+
+  modal.addComponents(new ActionRowBuilder().addComponents(reasonInput));
+
+  await interaction.showModal(modal);
+}
+
+async function submitOpenTicketModal(interaction) {
+  const existing = findExistingTicket(interaction.guild, interaction.user.id);
+
+  if (existing) {
+    return interaction.reply({
+      content: `You already have an open ticket: ${existing}`,
+      ephemeral: true
+    });
+  }
+
+  await interaction.deferReply({ ephemeral: true });
+
+  const reason = interaction.fields.getTextInputValue("reason").trim();
+
+  const ticketChannel = await createTicketChannel(
+    interaction.guild,
+    interaction.user,
+    reason
+  );
 
   await interaction.editReply(`Ticket created: ${ticketChannel}`);
+}
+
+// "! version" - open a ticket straight from a prefix command instead of the
+// button/modal, e.g. `!ticket Can't join the server`.
+async function openTicketFromMessage(message, args) {
+  const existing = findExistingTicket(message.guild, message.author.id);
+
+  if (existing) {
+    return message.reply(`You already have an open ticket: ${existing}`);
+  }
+
+  const reason = args.join(" ").trim();
+
+  if (!reason) {
+    return message.reply(
+      `Please include a reason, e.g. \`${config.prefix}ticket Can't join the server\`.`
+    );
+  }
+
+  const ticketChannel = await createTicketChannel(
+    message.guild,
+    message.author,
+    reason
+  );
+
+  await message.reply(`Ticket created: ${ticketChannel}`);
 }
 
 async function claimTicket(interaction) {
@@ -236,7 +336,7 @@ async function claimTicket(interaction) {
     });
   }
 
-  const { ownerId, claimedBy } = parseTopic(interaction.channel.topic);
+  const { ownerId, claimedBy, panelMessageId } = parseTopic(interaction.channel.topic);
 
   if (!ownerId) {
     return interaction.reply({
@@ -255,12 +355,21 @@ async function claimTicket(interaction) {
     });
   }
 
-  await interaction.channel.setTopic(buildTopic(ownerId, interaction.user.id));
+  await interaction.channel.setTopic(
+    buildTopic(ownerId, interaction.user.id, panelMessageId)
+  );
+
+  await updateTicketEmbed(interaction.channel, {
+    ownerId,
+    claimedBy: interaction.user.id,
+    panelMessageId
+  });
+
   await interaction.reply(`Ticket claimed by ${interaction.user}.`);
 }
 
 async function unclaimTicket(interaction) {
-  const { ownerId, claimedBy } = parseTopic(interaction.channel.topic);
+  const { ownerId, claimedBy, panelMessageId } = parseTopic(interaction.channel.topic);
 
   if (!ownerId) {
     return interaction.reply({
@@ -286,7 +395,14 @@ async function unclaimTicket(interaction) {
     });
   }
 
-  await interaction.channel.setTopic(buildTopic(ownerId, null));
+  await interaction.channel.setTopic(buildTopic(ownerId, null, panelMessageId));
+
+  await updateTicketEmbed(interaction.channel, {
+    ownerId,
+    claimedBy: null,
+    panelMessageId
+  });
+
   await interaction.reply(`Ticket unclaimed by ${interaction.user}.`);
 }
 
@@ -363,7 +479,7 @@ async function handleTicketButton(interaction) {
 
   switch (action) {
     case "open":
-      return openTicket(interaction);
+      return handleOpenTicketButton(interaction);
     case "claim":
       return claimTicket(interaction);
     case "unclaim":
@@ -383,5 +499,7 @@ module.exports = {
   executeSlash,
   buildSupportPanel,
   handleTicketButton,
-  submitRenameModal
+  submitRenameModal,
+  submitOpenTicketModal,
+  openTicketFromMessage
 };

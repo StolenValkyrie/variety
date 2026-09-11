@@ -251,6 +251,16 @@ client.on("interactionCreate", async interaction => {
         return;
       }
 
+      if (interaction.customId === "variety:ticket:open-modal") {
+        const support = client.commands.get("support");
+
+        if (support && typeof support.submitOpenTicketModal === "function") {
+          await support.submitOpenTicketModal(interaction);
+        }
+
+        return;
+      }
+
       if (interaction.customId.startsWith("variety:verification")) {
         const verification = client.commands.get("verification");
 
