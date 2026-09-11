@@ -13,7 +13,7 @@ const {
 } = require("discord.js");
 
 const dashboardConfig = {
-  title: "<:vlogo:1547647295531651232> Dashboard",
+  title: "<:logo2:11547875517250936842> Dashboard",
   description: "Below is our rules & information.",
   rules: [
     "Be respectful to everyone.",
