@@ -29,14 +29,7 @@ function buildVerificationPanel() {
         "Verify your roblox account with your discord."
       )
     )
-    .addSeparatorComponents(
-      new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
-    )
-    .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(
-        "Click the button below to check your verification status."
-      )
-    )
+    
     .addActionRowComponents(
       new ActionRowBuilder().addComponents(
         new ButtonBuilder()
