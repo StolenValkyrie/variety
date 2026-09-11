@@ -9,17 +9,15 @@ const {
   ButtonBuilder,
   ButtonStyle,
   MediaGalleryBuilder,
-  MediaItemBuilder,
-  MediaType,
   MessageFlags
 } = require("discord.js");
 
 function buildVerificationPanel() {
   return new ContainerBuilder()
     .addMediaGalleryComponents(
-      new MediaGalleryBuilder().setMediaItems([
-        new MediaItemBuilder().setType(MediaType.Image).setUrl(config.banners.top)
-      ])
+      new MediaGalleryBuilder().addItems(item =>
+        item.setURL(config.banners.top)
+      )
     )
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(
@@ -51,9 +49,9 @@ function buildVerificationPanel() {
       new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
     )
     .addMediaGalleryComponents(
-      new MediaGalleryBuilder().setMediaItems([
-        new MediaItemBuilder().setType(MediaType.Image).setUrl(config.banners.bottom)
-      ])
+      new MediaGalleryBuilder().addItems(item =>
+        item.setURL(config.banners.bottom)
+      )
     );
 }
 

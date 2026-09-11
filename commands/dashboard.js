@@ -9,8 +9,6 @@ const {
   ButtonBuilder,
   ButtonStyle,
   MediaGalleryBuilder,
-  MediaItemBuilder,
-  MediaType,
   MessageFlags
 } = require("discord.js");
 
@@ -32,9 +30,9 @@ const dashboardConfig = {
 function buildDashboard() {
   return new ContainerBuilder()
     .addMediaGalleryComponents(
-      new MediaGalleryBuilder().setMediaItems([
-        new MediaItemBuilder().setType(MediaType.Image).setUrl(config.banners.top)
-      ])
+      new MediaGalleryBuilder().addItems(item =>
+        item.setURL(config.banners.top)
+      )
     )
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(`# ${dashboardConfig.title}`)
@@ -79,9 +77,9 @@ function buildDashboard() {
       new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
     )
     .addMediaGalleryComponents(
-      new MediaGalleryBuilder().setMediaItems([
-        new MediaItemBuilder().setType(MediaType.Image).setUrl(config.banners.bottom)
-      ])
+      new MediaGalleryBuilder().addItems(item =>
+        item.setURL(config.banners.bottom)
+      )
     );
 }
 
