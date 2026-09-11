@@ -77,7 +77,7 @@ function buildSupportPanel() {
   return new ContainerBuilder()
     .addMediaGalleryComponents(
       new MediaGalleryBuilder().addItems(item =>
-        item.setURL(config.banners.top)
+        item.setURL("https://cdn.phototourl.com/free/2026-09-11-35fb5be4-a407-4efc-b11a-d96a0424a549.png")
       )
     )
     .addTextDisplayComponents(

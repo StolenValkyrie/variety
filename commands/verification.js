@@ -15,10 +15,11 @@ const {
 function buildVerificationPanel() {
   return new ContainerBuilder()
     .addMediaGalleryComponents(
-      new MediaGalleryBuilder().addItems(item =>
-        item.setURL(config.banners.top)
+      new MediaGalleryBuilder().addItems(
+        item => item.setURL("https://cdn.phototourl.com/free/2026-09-11-c764c11c-47b7-431c-bfc1-46e9fdde1dfc.png")
       )
     )
+    
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(
         "# <:logo2:1547875517250936842> Verification"
@@ -29,7 +30,7 @@ function buildVerificationPanel() {
         "Verify your roblox account with your discord."
       )
     )
-    
+
     .addActionRowComponents(
       new ActionRowBuilder().addComponents(
         new ButtonBuilder()
