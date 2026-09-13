@@ -121,6 +121,14 @@ client.on("guildMemberAdd", async member => {
   if (member.guild.id !== config.guildId) return;
   if (member.user.bot) return;
 
+  const welcome = client.commands.get("welcome");
+
+  if (welcome && typeof welcome.sendWelcomePanel === "function") {
+    await welcome.sendWelcomePanel(member).catch(error => {
+      console.error(`Failed to send welcome panel for ${member.user.tag}:`, error);
+    });
+  }
+
   if (!config.unverifiedRoleId) {
     console.warn("UNVERIFIED_ROLE_ID isn't set - skipping unverified role assignment.");
     return;
