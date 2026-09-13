@@ -1,17 +1,19 @@
 const {
   SlashCommandBuilder,
   PermissionFlagsBits,
-  EmbedBuilder
+  ContainerBuilder,
+  TextDisplayBuilder,
+  MessageFlags
 } = require("discord.js");
 
 const data = new SlashCommandBuilder()
   .setName("embedsay")
-  .setDescription("Make the bot send a plain embed (no colour).")
+  .setDescription("Make the bot send a plain container message.")
   .addStringOption(option =>
-    option.setName("description").setDescription("Embed body text").setRequired(true)
+    option.setName("description").setDescription("Message body text").setRequired(true)
   )
   .addStringOption(option =>
-    option.setName("title").setDescription("Embed title").setRequired(false)
+    option.setName("title").setDescription("Message title").setRequired(false)
   )
   .addChannelOption(option =>
     option
@@ -21,12 +23,18 @@ const data = new SlashCommandBuilder()
   )
   .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild);
 
-// No .setColor() call anywhere here on purpose — the embed intentionally
-// carries no accent colour.
-function buildEmbed(title, description) {
-  const embed = new EmbedBuilder().setDescription(description);
-  if (title) embed.setTitle(title);
-  return embed;
+function buildContainer(title, description) {
+  const container = new ContainerBuilder();
+
+  if (title) {
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`# ${title}`)
+    );
+  }
+
+  return container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(description)
+  );
 }
 
 async function execute(message, args) {
@@ -47,7 +55,10 @@ async function execute(message, args) {
     description = rest.join("|").trim();
   }
 
-  await message.channel.send({ embeds: [buildEmbed(title, description)] });
+  await message.channel.send({
+    components: [buildContainer(title, description)],
+    flags: MessageFlags.IsComponentsV2
+  });
   await message.delete().catch(() => {});
 }
 
@@ -63,7 +74,10 @@ async function executeSlash(interaction) {
     });
   }
 
-  await channel.send({ embeds: [buildEmbed(title, description)] });
+  await channel.send({
+    components: [buildContainer(title, description)],
+    flags: MessageFlags.IsComponentsV2
+  });
   await interaction.reply({ content: `Sent to ${channel}.`, ephemeral: true });
 }
 
