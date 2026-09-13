@@ -117,7 +117,10 @@ async function execute(message, args) {
     lines.push(`Not found: ${notFound.join(", ")}.`);
   }
 
-  await message.reply(lines.join("\n"));
+  await message.reply({
+    content: lines.join("\n"),
+    allowedMentions: { roles: [], users: [member.id] }
+  });
 }
 
 module.exports = {
