@@ -15,7 +15,6 @@ const {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-  EmbedBuilder,
   MessageFlags
 } = require("discord.js");
 
@@ -76,20 +75,46 @@ function ticketButtons() {
   );
 }
 
-function buildTicketEmbed({ ownerId, reason, claimedBy }) {
-  return new EmbedBuilder()
-    .setColor(claimedBy ? 0x57f287 : 0x5865f2)
-    .setTitle("Support Ticket")
-    .addFields(
-      { name: "Opened by", value: `<@${ownerId}>`, inline: true },
-      {
-        name: "Status",
-        value: claimedBy ? `Claimed by <@${claimedBy}>` : "Unclaimed",
-        inline: true
-      },
-      { name: "Reason", value: reason || "No reason provided." }
+// Reasons live in memory (keyed by channel ID) so claim/unclaim edits can
+// redraw the panel without re-parsing it. If the bot restarts, the fallback
+// in extractReasonFromPanel() re-reads it off the existing message instead.
+const ticketReasons = new Map();
+
+function buildTicketPanel({ ownerId, reason, claimedBy, staffMention }) {
+  const container = new ContainerBuilder();
+
+  const pingLine = [`<@${ownerId}>`, staffMention].filter(Boolean).join(" ");
+
+  if (pingLine) {
+    container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(pingLine)
+    );
+  }
+
+  return container
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent("# Support Ticket")
     )
-    .setTimestamp();
+    .addSeparatorComponents(
+      new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
+    )
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`**Opened by:** <@${ownerId}>`)
+    )
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        `**Status:** ${claimedBy ? `Claimed by <@${claimedBy}>` : "Unclaimed"}`
+      )
+    )
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        `**Reason:**\n${reason || "No reason provided."}`
+      )
+    )
+    .addSeparatorComponents(
+      new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
+    )
+    .addActionRowComponents(ticketButtons());
 }
 
 function buildSupportPanel() {
@@ -225,10 +250,18 @@ async function createTicketChannel(guild, user, reason) {
     ? `<@&${config.support.staffRoleId}>`
     : "";
 
+  ticketReasons.set(ticketChannel.id, reason);
+
   const panelMessage = await ticketChannel.send({
-    content: `${user} ${staffMention}`.trim(),
-    embeds: [buildTicketEmbed({ ownerId: user.id, reason, claimedBy: null })],
-    components: [ticketButtons()]
+    components: [
+      buildTicketPanel({
+        ownerId: user.id,
+        reason,
+        claimedBy: null,
+        staffMention
+      })
+    ],
+    flags: MessageFlags.IsComponentsV2
   });
 
   await ticketChannel.setTopic(buildTopic(user.id, null, panelMessage.id));
@@ -236,20 +269,44 @@ async function createTicketChannel(guild, user, reason) {
   return ticketChannel;
 }
 
-async function updateTicketEmbed(channel, { ownerId, claimedBy, panelMessageId }) {
+function extractReasonFromPanel(message) {
+  try {
+    for (const container of message.components) {
+      for (const component of container.components || []) {
+        if (component.content && component.content.startsWith("**Reason:**")) {
+          return component.content.replace("**Reason:**", "").trim();
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Failed to read reason off existing ticket panel:", error);
+  }
+
+  return null;
+}
+
+async function updateTicketPanel(channel, { ownerId, claimedBy, panelMessageId }) {
   if (!panelMessageId) return;
 
   try {
     const message = await channel.messages.fetch(panelMessageId);
-    const existingEmbed = message.embeds[0];
-    const reasonField = existingEmbed?.fields?.find(field => field.name === "Reason");
-    const reason = reasonField ? reasonField.value : "No reason provided.";
+    const reason =
+      ticketReasons.get(channel.id) ??
+      extractReasonFromPanel(message) ??
+      "No reason provided.";
+
+    const staffMention = config.support.staffRoleId
+      ? `<@&${config.support.staffRoleId}>`
+      : "";
 
     await message.edit({
-      embeds: [buildTicketEmbed({ ownerId, reason, claimedBy })]
+      components: [
+        buildTicketPanel({ ownerId, reason, claimedBy, staffMention })
+      ],
+      flags: MessageFlags.IsComponentsV2
     });
   } catch (error) {
-    console.error("Failed to update ticket embed:", error);
+    console.error("Failed to update ticket panel:", error);
   }
 }
 
@@ -359,7 +416,7 @@ async function claimTicket(interaction) {
     buildTopic(ownerId, interaction.user.id, panelMessageId)
   );
 
-  await updateTicketEmbed(interaction.channel, {
+  await updateTicketPanel(interaction.channel, {
     ownerId,
     claimedBy: interaction.user.id,
     panelMessageId
@@ -397,7 +454,7 @@ async function unclaimTicket(interaction) {
 
   await interaction.channel.setTopic(buildTopic(ownerId, null, panelMessageId));
 
-  await updateTicketEmbed(interaction.channel, {
+  await updateTicketPanel(interaction.channel, {
     ownerId,
     claimedBy: null,
     panelMessageId
@@ -468,6 +525,8 @@ async function closeTicket(interaction) {
   }
 
   await interaction.reply("Closing this ticket in 5 seconds...");
+
+  ticketReasons.delete(interaction.channel.id);
 
   setTimeout(() => {
     interaction.channel.delete("Ticket closed").catch(() => {});
