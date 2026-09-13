@@ -186,8 +186,8 @@ async function handleVerificationModalSubmit(interaction) {
 
     if (dockResult && dockResult.verified) {
       if (String(dockResult.robloxId) === String(robloxUser.id)) {
-        await member.roles.add(
-          config.verifiedRoleId,
+        await grantVerifiedRole(
+          member,
           `Variety verification (Dock-confirmed Roblox: ${robloxUser.name}, ID: ${robloxUser.id})`
         );
 
@@ -239,6 +239,16 @@ function generateVerificationCode() {
   return `variety-${crypto.randomBytes(3).toString("hex")}`;
 }
 
+async function grantVerifiedRole(member, reason) {
+  await member.roles.add(config.verifiedRoleId, reason);
+
+  if (config.unverifiedRoleId && member.roles.cache.has(config.unverifiedRoleId)) {
+    await member.roles.remove(config.unverifiedRoleId, "Verified").catch(error => {
+      console.error(`Failed to remove unverified role from ${member.user.tag}:`, error);
+    });
+  }
+}
+
 function buildConfirmRow() {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
@@ -281,8 +291,8 @@ async function handleVerificationConfirm(interaction) {
       pendingVerifications.delete(interaction.user.id);
 
       const member = await interaction.guild.members.fetch(interaction.user.id);
-      await member.roles.add(
-        config.verifiedRoleId,
+      await grantVerifiedRole(
+        member,
         `Variety verification (Roblox: ${pending.robloxName}, ID: ${pending.robloxId})`
       );
 
@@ -391,7 +401,7 @@ async function verifyWithDockFallback(interaction, member) {
       return;
     }
 
-    await member.roles.add(config.verifiedRoleId, "Variety verification (via Dock)");
+    await grantVerifiedRole(member, "Variety verification (via Dock)");
 
     await interaction.editReply({
       content: "Verification successful via Dock! Your verified role has been added.",

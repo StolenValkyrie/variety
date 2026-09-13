@@ -36,6 +36,7 @@ if (!config.token) {
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent
   ]
@@ -113,6 +114,22 @@ client.once("ready", async () => {
     console.log("Variety startup complete.");
   } catch (error) {
     console.error("Startup error:", error);
+  }
+});
+
+client.on("guildMemberAdd", async member => {
+  if (member.guild.id !== config.guildId) return;
+  if (member.user.bot) return;
+
+  if (!config.unverifiedRoleId) {
+    console.warn("UNVERIFIED_ROLE_ID isn't set - skipping unverified role assignment.");
+    return;
+  }
+
+  try {
+    await member.roles.add(config.unverifiedRoleId, "New member - awaiting verification");
+  } catch (error) {
+    console.error(`Failed to add unverified role to ${member.user.tag}:`, error);
   }
 });
 
